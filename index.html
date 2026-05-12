@@ -163,6 +163,54 @@ body{background:var(--bg);color:var(--tx);font-family:'Noto Sans KR',sans-serif;
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
 @media(max-width:1100px){.g2{grid-template-columns:1fr;}.kg,.kg5{grid-template-columns:1fr 1fr;}}
 
+/* ═══ 모바일 반응형 ═══ */
+/* 햄버거 버튼 */
+.mob-bar{display:none;position:fixed;top:0;left:0;right:0;height:52px;background:var(--sb);z-index:300;align-items:center;padding:0 14px;gap:12px;border-bottom:1px solid rgba(255,255,255,.08);}
+.mob-ham{background:none;border:none;cursor:pointer;padding:6px;display:flex;flex-direction:column;gap:5px;}
+.mob-ham span{display:block;width:22px;height:2px;background:#fff;border-radius:2px;transition:all .25s;}
+.mob-ham.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px);}
+.mob-ham.open span:nth-child(2){opacity:0;}
+.mob-ham.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px);}
+.mob-title{color:#fff;font-size:14px;font-weight:700;flex:1;}
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:250;backdrop-filter:blur(2px);}
+.mob-overlay.on{display:block;}
+
+@media(max-width:768px){
+  /* 사이드바 슬라이드 */
+  .sb{transform:translateX(-100%);transition:transform .28s cubic-bezier(.4,0,.2,1);top:52px;z-index:260;}
+  .sb.mob-open{transform:translateX(0);}
+  /* 상단 모바일 바 표시 */
+  .mob-bar{display:flex;}
+  /* 메인 콘텐츠 전체폭 */
+  .main{margin-left:0;padding-top:52px;}
+  /* 패널 헤더 조정 */
+  .ph{padding:14px 14px 10px;flex-wrap:wrap;gap:8px;}
+  .ph-title{font-size:18px;}
+  /* 콘텐츠 패딩 축소 */
+  .ct{padding:10px;}
+  .sc{margin-bottom:10px;}
+  .sc-h{padding:10px 12px;}
+  /* 테이블 가로 스크롤 */
+  .t{font-size:11px;}
+  .t th,.t td{padding:6px 8px;}
+  /* KPI 카드 2열 */
+  .kg{grid-template-columns:1fr 1fr;}
+  .kg5{grid-template-columns:1fr 1fr;}
+  /* 편집 버튼 항상 표시 */
+  .eb{opacity:1;}
+  /* 패널헤더 버튼 */
+  .pbtn{font-size:11px;padding:5px 10px;}
+  /* NI 서브탭 스크롤 */
+  .ni-stab{padding:10px 12px;font-size:12px;}
+  /* 표 오버플로 */
+  .sc > .t, .sc > table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  /* 페이지 헤더 고정바 */
+  .fx-bar{font-size:11px;padding:6px 12px;flex-wrap:wrap;gap:6px;}
+  /* 인라인 수치 */
+  .tri-main{font-size:12px;}
+  .tri-sub{font-size:10px;}
+}
+
 /* CHART */
 .chart{display:flex;align-items:flex-end;gap:7px;height:120px;padding:0 4px;}
 .bar-g{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;}
@@ -269,6 +317,18 @@ body{background:var(--bg);color:var(--tx);font-family:'Noto Sans KR',sans-serif;
 </style>
 </head>
 <body>
+
+<!-- 모바일 상단 바 (768px 이하에서만 표시) -->
+<div class="mob-bar">
+  <button class="mob-ham" id="mob-ham" onclick="toggleMobMenu()">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="mob-title" id="mob-page-title">삼보가든</div>
+  <div style="font-size:11px;color:rgba(168,184,208,.5)" id="mob-save-ind">● 저장됨</div>
+</div>
+
+<!-- 모바일 오버레이 (사이드바 밖 클릭시 닫기) -->
+<div class="mob-overlay" id="mob-overlay" onclick="closeMobMenu()"></div>
 
 <!-- SIDEBAR -->
 <div class="sb">
@@ -1469,6 +1529,36 @@ function goPage(id, el) {
   document.querySelectorAll('.sb-item').forEach(function(s){ s.classList.remove('on'); });
   G(id).classList.add('on');
   if (el) el.classList.add('on');
+  // 모바일: 페이지 이동 시 사이드바 닫기
+  closeMobMenu();
+  // 모바일 상단 타이틀 업데이트
+  var titleEl = G('mob-page-title');
+  if (titleEl && el) titleEl.textContent = el.textContent.trim();
+}
+
+// 모바일 햄버거 메뉴 토글
+function toggleMobMenu() {
+  var sb = document.querySelector('.sb');
+  var ham = G('mob-ham');
+  var overlay = G('mob-overlay');
+  var isOpen = sb.classList.contains('mob-open');
+  if (isOpen) {
+    sb.classList.remove('mob-open');
+    ham.classList.remove('open');
+    overlay.classList.remove('on');
+  } else {
+    sb.classList.add('mob-open');
+    ham.classList.add('open');
+    overlay.classList.add('on');
+  }
+}
+function closeMobMenu() {
+  var sb = document.querySelector('.sb');
+  var ham = G('mob-ham');
+  var overlay = G('mob-overlay');
+  if (sb) sb.classList.remove('mob-open');
+  if (ham) ham.classList.remove('open');
+  if (overlay) overlay.classList.remove('on');
 }
 
 document.querySelectorAll('.sb-item').forEach(function(item) {
@@ -1498,6 +1588,8 @@ function schedSave() {
   clearTimeout(saveTimer);
   G('save-ind').style.color = 'var(--or2)';
   G('save-ind').textContent = '● 저장 중...';
+  var mobInd = G('mob-save-ind');
+  if (mobInd) { mobInd.textContent = '● 저장 중...'; mobInd.style.color = 'var(--or2)'; }
   saveTimer = setTimeout(function() {
     try {
       var memo = G('memo');
@@ -1505,8 +1597,10 @@ function schedSave() {
       localStorage.setItem('sambo-data', JSON.stringify(D));
       G('save-ind').style.color = 'var(--gr2)';
       G('save-ind').textContent = '● 자동저장됨';
+      if (mobInd) { mobInd.textContent = '● 저장됨'; mobInd.style.color = 'rgba(168,184,208,.5)'; }
     } catch(e) {
       G('save-ind').textContent = '⚠ 저장 실패';
+      if (mobInd) mobInd.textContent = '⚠ 저장 실패';
     }
   }, 800);
 }
