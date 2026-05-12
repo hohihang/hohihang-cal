@@ -187,8 +187,13 @@ body{background:var(--bg);color:var(--tx);font-family:'Noto Sans KR',sans-serif;
 
 /* INVEST */
 .icat{border:1px solid var(--bor);border-radius:var(--r);margin-bottom:12px;overflow:hidden;}
-.icat-h{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--sur);}
+.icat-h{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--sur);border-bottom:1px solid var(--bor);gap:10px;flex-wrap:wrap;}
 .icat-ic{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+.inv-cat-name-inp{display:block;width:100%;background:transparent;border:none;border-bottom:1px dashed transparent;color:var(--tx);font-size:13px;font-weight:700;padding:2px 3px;outline:none;font-family:'Noto Sans KR',sans-serif;transition:border-color .15s;}
+.inv-cat-name-inp:hover{border-bottom-color:var(--bor2);}
+.inv-cat-name-inp:focus{border-bottom-color:var(--bl);}
+.inv-cat-en-inp{display:block;width:100%;background:transparent;border:none;border-bottom:1px dashed transparent;color:var(--tx3);font-size:10px;padding:1px 3px;outline:none;font-family:'Noto Sans KR',sans-serif;transition:border-color .15s;}
+.inv-cat-en-inp:hover,.inv-cat-en-inp:focus{border-bottom-color:var(--bor2);}
 
 /* SCENARIO */
 .sc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
@@ -1122,29 +1127,37 @@ function renderInv(r) {
   G('inv-cats').innerHTML = D.cats.map(function(cat) {
     var lo = cat.items.reduce(function(a,i){return a+i.lo;},0);
     var hi = cat.items.reduce(function(a,i){return a+i.hi;},0);
-    var rows = cat.items.length > 0 ? '<table class="t"><thead><tr><th>항목</th><th>계산 방식</th><th>LOW</th><th>HIGH</th><th>결과 (LOW — HIGH)</th><th></th></tr></thead><tbody>' +
+    var rows = cat.items.length > 0 ?
+      '<table class="t"><thead><tr><th>항목</th><th>계산 방식</th><th>LOW</th><th>HIGH</th><th>결과 (LOW — HIGH)</th><th></th></tr></thead><tbody>' +
       cat.items.map(function(item) {
         return '<tr>' +
-          '<td><div class="cell"><span class="cn">'+item.name+'</span><button class="eb" onclick="editInvF(\''+cat.id+'\','+item.id+',\'name\')">✏️</button></div></td>' +
-          '<td><div class="cell"><span class="note">'+item.driver+'</span><button class="eb" onclick="editInvF(\''+cat.id+'\','+item.id+',\'driver\')">✏️</button></div></td>' +
-          '<td><div class="cell"><span class="cv">'+fSGD(item.lo)+'</span><button class="eb" onclick="editInvF(\''+cat.id+'\','+item.id+',\'lo\')">✏️</button></div></td>' +
-          '<td><div class="cell"><span class="cv">'+fSGD(item.hi)+'</span><button class="eb" onclick="editInvF(\''+cat.id+'\','+item.id+',\'hi\')">✏️</button></div></td>' +
+          '<td><div class="cell"><span class="cn">'+item.name+'</span><button class="eb always" onclick="editInvF(\''+cat.id+'\','+item.id+',\'name\')">✏️</button></div></td>' +
+          '<td><div class="cell"><span class="note">'+item.driver+'</span><button class="eb always" onclick="editInvF(\''+cat.id+'\','+item.id+',\'driver\')">✏️</button></div></td>' +
+          '<td><div class="cell"><span class="cv">'+fSGD(item.lo)+'</span><button class="eb always" onclick="editInvF(\''+cat.id+'\','+item.id+',\'lo\')">✏️</button></div></td>' +
+          '<td><div class="cell"><span class="cv">'+fSGD(item.hi)+'</span><button class="eb always" onclick="editInvF(\''+cat.id+'\','+item.id+',\'hi\')">✏️</button></div></td>' +
           '<td><div class="cell"><div class="tri"><span class="tri-main bl">'+fSGD(item.lo)+' — '+fSGD(item.hi)+'</span><span class="tri-sub">'+fUSD(item.lo)+' — '+fUSD(item.hi)+'</span><span class="tri-sub">중간: '+fKRW((item.lo+item.hi)/2)+'</span></div></div></td>' +
           '<td style="width:40px"><div class="cell"><button class="db" onclick="delInvItem(\''+cat.id+'\','+item.id+')">🗑</button></div></td>' +
           '</tr>';
-      }).join('') + '</tbody></table>' : '<div style="padding:12px 16px;font-size:12px;color:var(--tx3)">항목이 없습니다. "항목 추가"를 눌러 새로 만드세요.</div>';
+      }).join('') + '</tbody></table>' :
+      '<div style="padding:12px 16px;font-size:12px;color:var(--tx3)">항목이 없습니다. "항목 추가"를 눌러 새로 만드세요.</div>';
 
-    return '<div class="icat">' +
+    return '<div class="icat" id="icat-'+cat.id+'">' +
       '<div class="icat-h">' +
-      '<div style="display:flex;align-items:center;gap:10px">' +
+      '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">' +
       '<div class="icat-ic" style="background:'+cat.color+'">'+cat.id+'</div>' +
-      '<div><div style="font-size:13px;font-weight:700">'+cat.name+'</div><div style="font-size:10px;color:var(--tx3)">'+cat.en+'</div></div>' +
+      '<div style="flex:1;min-width:0">' +
+      '<input class="inv-cat-name-inp" value="'+cat.name+'" placeholder="중분류명" data-cid="'+cat.id+'" data-field="name" oninput="invCatInp(this)">' +
+      '<input class="inv-cat-en-inp" value="'+cat.en+'" placeholder="English name" data-cid="'+cat.id+'" data-field="en" oninput="invCatInp(this)">' +
       '</div>' +
-      '<div style="display:flex;align-items:center;gap:10px">' +
+      '<input type="color" value="'+cat.color+'" title="색상 변경" data-cid="'+cat.id+'" onchange="invCatColor(this)" style="width:22px;height:22px;border:none;border-radius:50%;padding:0;cursor:pointer;flex-shrink:0">' +
+      '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">' +
       '<span style="font-size:12px;color:var(--tx3)">소계: <b style="color:var(--bl)">'+fSGD(lo)+' — '+fSGD(hi)+'</b></span>' +
       '<button class="btn out sm" onclick="addInvItem(\''+cat.id+'\')">＋ 항목 추가</button>' +
+      '<button class="db" onclick="delInvCat(\''+cat.id+'\')" title="중분류 삭제" style="font-size:14px;padding:4px 8px">🗑</button>' +
       '</div></div>' + rows + '</div>';
-  }).join('');
+  }).join('') +
+  '<button class="btn out" style="width:100%;margin-top:8px;padding:11px" onclick="addInvCat()">＋ 중분류(카테고리) 추가</button>';
 
   G('inv-tot-sgd').textContent = fSGD(r.invLo) + ' — ' + fSGD(r.invHi);
   G('inv-tot-sub').textContent = fUSD(r.invLo) + ' — ' + fUSD(r.invHi) + '  |  ' + fKRW(r.invMid) + ' (중간값)';
@@ -1391,6 +1404,44 @@ function delInvItem(catId, itemId) {
   var cat = D.cats.find(function(c){ return c.id===catId; });
   cat.items = cat.items.filter(function(i){ return i.id!==itemId; });
   renderAll();
+}
+
+// ── 중분류 인라인 편집
+function invCatInp(inp) {
+  var cid = inp.getAttribute('data-cid');
+  var field = inp.getAttribute('data-field');
+  var cat = D.cats.find(function(c){ return c.id === cid; });
+  if (cat) cat[field] = inp.value;
+  schedSave();
+}
+// ── 중분류 색상 변경
+function invCatColor(inp) {
+  var cid = inp.getAttribute('data-cid');
+  var cat = D.cats.find(function(c){ return c.id === cid; });
+  if (cat) {
+    cat.color = inp.value;
+    var ic = document.querySelector('#icat-'+cid+' .icat-ic');
+    if (ic) ic.style.background = inp.value;
+  }
+  schedSave();
+}
+// ── 중분류 삭제
+function delInvCat(catId) {
+  var cat = D.cats.find(function(c){ return c.id === catId; });
+  if (!cat) return;
+  if (!confirm('"' + cat.name + '" 중분류와 항목 전체를 삭제할까요?')) return;
+  D.cats = D.cats.filter(function(c){ return c.id !== catId; });
+  renderAll(); schedSave();
+}
+// ── 중분류 추가
+function addInvCat() {
+  var labels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  var usedIds = D.cats.map(function(c){ return c.id; });
+  var newId = labels.split('').find(function(l){ return usedIds.indexOf(l) === -1; }) || ('X'+String(++nid));
+  var colors = ['#2563eb','#059669','#7c3aed','#dc2626','#d97706','#0891b2','#be185d','#065f46'];
+  var color = colors[D.cats.length % colors.length];
+  D.cats.push({ id: newId, name: '새 카테고리', en: 'New Category', color: color, items: [] });
+  renderAll(); schedSave();
 }
 
 /* SCENARIO */
