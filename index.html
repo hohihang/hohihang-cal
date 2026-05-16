@@ -859,76 +859,95 @@ function cloudLoadScenarios() {
 // STATE
 // =============================================
 var D = {
-  fx: { sgdKrw: 1020, usdSgd: 1.35 },
+  fx: { sgdKrw: 950, usdSgd: 1.34 },
   // 브랜드 설정
-  brand: { name: '삼보가든', sub: 'Pre-Opening · Singapore' },
+  brand: { name: '내 가게 이름', sub: '업종 · 지역' },
   // 표시 설정
   display: { currencies: ['krw'], areaUnit: 'pyung', editCurrency: 'krw' },
-  ppa: { lunch: 38, dinner: 85 },
-  seats: { tables: 12, pax: 2.7, sqft: 1000 },
+  ppa: { lunch: 15000, dinner: 25000 },
+  seats: { tables: 10, pax: 3.0, sqft: 330 },
   turns: { wdL: 1.0, wdD: 1.5, weL: 1.5, weD: 2.0 },
-  capture: { wd: 95, we: 95, wdO: 0, weO: 0 },
+  capture: { wd: 80, we: 90, wdO: 0, weO: 0 },
   days: { wd: 22, we: 8 },
-  costs: { food: 35, rent: 3000000, gto: 0, card: 2.2, util: 2500000, mkt: 20000000, other: 1500000 },
-  tax: 17, personalTax: 6.6, depMonths: 60, empTax: 25000,
-  taxType: 'corporate',   // 'corporate' | 'personal'
+  costs: { food: 32, rent: 2500000, gto: 0, card: 1.5, util: 600000, mkt: 300000, other: 300000 },
+  tax: 6.6, personalTax: 6.6, depMonths: 60, empTax: 180000,
+  taxType: 'personal',    // 'corporate' | 'personal'
   rentType: 'fixed',      // 'fixed' | 'gto' | 'hybrid'
   staff: [
-    { id:1, dept:'Kitchen 주방', pos:'Prep Cook 찬모', count:2, salary:3500000 },
-    { id:2, dept:'Front of House 홀', pos:'Floor Manager 홀 매니저', count:1, salary:3500000 }
+    { id:1, dept:'주방', pos:'주방 직원', count:1, salary:2500000 },
+    { id:2, dept:'홀', pos:'홀 직원', count:1, salary:2400000 },
+    { id:3, dept:'홀', pos:'아르바이트', count:1, salary:1200000 }
   ],
   cats: [
     { id:'A', name:'인테리어/기본공사', en:'Interior & Base Construction', color:'#2563eb',
-      items:[{ id:1, name:'철거 및 바닥 단상 공사', driver:'면적당 단가 / Per sqft', lo:50000, hi:100000 }]},
-    { id:'B', name:'환기/정화', en:'Ventilation & Filtration', color:'#059669', items:[]},
-    { id:'C', name:'CookTek 인덕션', en:'CookTek Induction', color:'#7c3aed', items:[]},
-    { id:'D', name:'주방설비', en:'Kitchen Equipment', color:'#dc2626', items:[]},
-    { id:'E', name:'FF&E 가구·집기', en:'Furniture, Fixtures & Equipment', color:'#d97706', items:[]},
+      items:[{ id:1, name:'철거 및 바닥 공사', driver:'고정비 / Fixed', lo:3000000, hi:8000000 }]},
+    { id:'B', name:'환기/정화', en:'Ventilation & Filtration', color:'#059669',
+      items:[
+        { id:30, name:'환풍기 및 덕트 공사', driver:'고정비 / Fixed', lo:3000000, hi:8000000 },
+        { id:31, name:'에어컨 설치', driver:'고정비 / Fixed', lo:2000000, hi:5000000 }
+      ]},
+    { id:'C', name:'조리 장비', en:'Cooking Equipment', color:'#7c3aed',
+      items:[
+        { id:40, name:'가스레인지/인덕션', driver:'고정비 / Fixed', lo:1500000, hi:4000000 },
+        { id:41, name:'그릴/숯불 장비', driver:'고정비 / Fixed', lo:1000000, hi:3000000 }
+      ]},
+    { id:'D', name:'주방설비', en:'Kitchen Equipment', color:'#dc2626',
+      items:[
+        { id:50, name:'냉장·냉동고', driver:'고정비 / Fixed', lo:2000000, hi:5000000 },
+        { id:51, name:'주방 싱크대 및 선반', driver:'고정비 / Fixed', lo:1000000, hi:2500000 },
+        { id:52, name:'식기세척기', driver:'고정비 / Fixed', lo:500000, hi:1500000 }
+      ]},
+    { id:'E', name:'FF&E 가구·집기', en:'Furniture, Fixtures & Equipment', color:'#d97706',
+      items:[
+        { id:60, name:'테이블 및 의자', driver:'고정비 / Fixed', lo:2000000, hi:5000000 },
+        { id:61, name:'조명 및 인테리어 소품', driver:'고정비 / Fixed', lo:1000000, hi:3000000 },
+        { id:62, name:'POS 시스템', driver:'고정비 / Fixed', lo:500000, hi:1500000 }
+      ]},
     { id:'F', name:'인허가/전문서비스', en:'Permits & Professional Services', color:'#0891b2',
       items:[
-        { id:10, name:'인테리어 디자인 설계비', driver:'고정비 / Fixed', lo:37500, hi:60000 },
-        { id:11, name:'M&E 엔지니어링', driver:'고정비 / Fixed', lo:18750, hi:30000 },
-        { id:12, name:'컨설팅 관리비', driver:'고정비 / Fixed', lo:15000, hi:26250 },
-        { id:13, name:'각종 정부 허가비', driver:'고정비 / Fixed', lo:6000, hi:11250 },
-        { id:14, name:'프로젝트 관리', driver:'고정비 / Fixed', lo:11250, hi:18750 },
-        { id:15, name:'예비비 (10%)', driver:'고정비 / Fixed', lo:63750, hi:105000 }
+        { id:10, name:'인테리어 설계비', driver:'고정비 / Fixed', lo:1000000, hi:3000000 },
+        { id:11, name:'영업신고·허가비', driver:'고정비 / Fixed', lo:100000, hi:300000 },
+        { id:12, name:'소방·위생 검사비', driver:'고정비 / Fixed', lo:200000, hi:500000 },
+        { id:13, name:'컨설팅·행정비', driver:'고정비 / Fixed', lo:300000, hi:800000 },
+        { id:14, name:'보증금 (권리금 제외)', driver:'고정비 / Fixed', lo:5000000, hi:20000000 },
+        { id:15, name:'예비비 (10%)', driver:'고정비 / Fixed', lo:2000000, hi:5000000 }
       ]},
     { id:'G', name:'기타 비용', en:'Other Costs', color:'#6b7280',
-      items:[{ id:20, name:'초기 마케팅 및 기타비용', driver:'고정비 / Fixed', lo:30000, hi:50000 }]}
+      items:[{ id:20, name:'초기 마케팅 및 기타비용', driver:'고정비 / Fixed', lo:500000, hi:2000000 }]}
   ],
   scenarios: [],
   memo: '',
   // 실순익 계산기
   ni: {
     rev: [
-      { id:101, name:'홀/포장 카드매출', note:'결제 수수료 차감 전 승인금액', val:0 },
-      { id:102, name:'홀/포장 현금매출', note:'현금영수증 발행 포함', val:0 },
-      { id:103, name:'배달앱 매출', note:'배민·요기요·쿠팡이츠 (앱별 수수료 다름)', val:0 },
+      { id:101, name:'홀/포장 카드매출', note:'결제 수수료 차감 전 승인금액', val:28000000 },
+      { id:102, name:'홀/포장 현금매출', note:'현금영수증 발행 포함', val:5000000 },
+      { id:103, name:'배달앱 매출', note:'배민·요기요·쿠팡이츠 (앱별 수수료 다름)', val:4000000 },
       { id:104, name:'기타 매출', note:'정부 지원금, 플랫폼 프로모션 환급 등', val:0 }
     ],
     var: [
-      { id:201, name:'식자재 매입비', note:'농수축산물 및 공산품 (면세/과세 구분)', val:0 },
-      { id:202, name:'주류 및 음료 매입비', note:'소주, 맥주, 음료수 등', val:0 },
-      { id:203, name:'포장 및 소모품비', note:'배달용기, 종이컵, 냅킨, 영수증 용지 등', val:0 },
-      { id:204, name:'배달앱 수수료', note:'플랫폼 이용료, 중개 수수료, 결제 수수료 (매출의 %)', val:0 },
-      { id:205, name:'배달 대행료', note:'라이더 지급 건당 배달팁 (사장님 실부담금)', val:0 },
-      { id:206, name:'카드 결제 수수료', note:'VAN사/PG사 결제 수수료 (영세/중소 가맹점 우대)', val:0 }
+      { id:201, name:'식자재 매입비', note:'농수축산물 및 공산품 (면세/과세 구분)', val:11000000 },
+      { id:202, name:'주류 및 음료 매입비', note:'소주, 맥주, 음료수 등', val:2000000 },
+      { id:203, name:'포장 및 소모품비', note:'배달용기, 종이컵, 냅킨, 영수증 용지 등', val:300000 },
+      { id:204, name:'배달앱 수수료', note:'플랫폼 이용료, 중개 수수료, 결제 수수료 (매출의 %)', val:400000 },
+      { id:205, name:'배달 대행료', note:'라이더 지급 건당 배달팁 (사장님 실부담금)', val:300000 },
+      { id:206, name:'카드 결제 수수료', note:'VAN사/PG사 결제 수수료 (영세/중소 가맹점 우대)', val:420000 }
     ],
     fix: [
-      { id:301, name:'임대료 (월세)', note:'부가세 10% 포함 여부 별도 확인', val:0 },
-      { id:302, name:'건물 관리비', note:'상가 공용 관리비', val:0 },
-      { id:303, name:'공과금 (수도광열비)', note:'전기요금, 가스요금, 상하수도 요금', val:0 },
-      { id:304, name:'인건비 (정직원)', note:'4대보험 사장님 부담금 약 9.3% + 퇴직금 적립 포함', val:0 },
-      { id:305, name:'인건비 (아르바이트)', note:'주휴수당 포함 여부 확인', val:0 },
-      { id:306, name:'광고/마케팅비', note:'배달앱 깃발, 울트라콜, SNS 광고, 전단지 등', val:0 },
-      { id:307, name:'통신/보안/렌탈비', note:'인터넷, 전화, POS기 렌탈, 세스코, 캡스, 정수기 등', val:0 },
-      { id:308, name:'기타 잡비', note:'세무 기장료, 화재/배상 책임 보험료, 수선 유지비', val:0 }
+      { id:301, name:'임대료 (월세)', note:'부가세 10% 포함 여부 별도 확인', val:2500000 },
+      { id:302, name:'건물 관리비', note:'상가 공용 관리비', val:200000 },
+      { id:303, name:'공과금 (수도광열비)', note:'전기요금, 가스요금, 상하수도 요금', val:600000 },
+      { id:304, name:'인건비 (정직원)', note:'4대보험 사장님 부담금 약 9.3% + 퇴직금 적립 포함', val:5500000 },
+      { id:305, name:'인건비 (아르바이트)', note:'주휴수당 포함 여부 확인', val:1200000 },
+      { id:306, name:'광고/마케팅비', note:'배달앱 깃발, 울트라콜, SNS 광고, 전단지 등', val:300000 },
+      { id:307, name:'통신/보안/렌탈비', note:'인터넷, 전화, POS기 렌탈, 세스코, 캡스, 정수기 등', val:200000 },
+      { id:308, name:'기타 잡비', note:'세무 기장료, 화재/배상 책임 보험료, 수선 유지비', val:300000 }
     ],
     hid: [
-      { id:401, name:'사장님 본인 인건비', note:'매장에서 일하는 시간만큼의 기회비용 (최저시급 이상)', val:0 },
-      { id:402, name:'감가상각비', note:'초기 인테리어·권리금·주방집기 ÷ 내용연수(60개월)', val:0 },
-      { id:403, name:'부가가치세 적립금', note:'매출의 약 3~5%를 매월 세금 명목으로 미리 적립', val:0 },
-      { id:404, name:'종합소득세 적립금', note:'5월에 내는 세금 대비 순수익의 일정 비율 예비 적립', val:0 }
+      { id:401, name:'사장님 본인 인건비', note:'매장에서 일하는 시간만큼의 기회비용 (최저시급 이상)', val:3000000 },
+      { id:402, name:'감가상각비', note:'초기 인테리어·권리금·주방집기 ÷ 내용연수(60개월)', val:500000 },
+      { id:403, name:'부가가치세 적립금', note:'매출의 약 3~5%를 매월 세금 명목으로 미리 적립', val:1100000 },
+      { id:404, name:'종합소득세 적립금', note:'5월에 내는 세금 대비 순수익의 일정 비율 예비 적립', val:300000 }
     ]
   }
 };
