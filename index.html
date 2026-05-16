@@ -254,9 +254,254 @@ tr:hover .eb{opacity:1;}
 .mi-comma{width:100%;border:none;border-bottom:2px solid var(--bor2);padding:9px 4px;font-size:15px;font-family:'DM Mono',monospace;outline:none;background:transparent;color:var(--tx);transition:border-color .15s;}
 .mi-comma:focus{border-bottom-color:var(--bl);}
 .krw-spaced{letter-spacing:0.3em;}
+
+  /* ── 구글 로그인 UI ── */
+  #auth-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  #google-login-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #fff;
+    border: 1px solid #E8EBED;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #191F28;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  #google-login-btn:hover { background: #f8f9fa; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+  #user-info {
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+  #user-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #E8EBED;
+  }
+  #user-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #191F28;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  #logout-btn {
+    background: none;
+    border: 1px solid #E8EBED;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    color: #6B7684;
+    cursor: pointer;
+  }
+  #logout-btn:hover { background: #f8f9fa; }
+  #cloud-save-btn, #cloud-load-btn {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+  }
+  #cloud-save-btn {
+    background: #3182F6;
+    color: #fff;
+  }
+  #cloud-save-btn:hover { background: #1a6fd8; }
+  #cloud-load-btn {
+    background: #fff;
+    color: #3182F6;
+    border: 1px solid #3182F6;
+  }
+  #cloud-load-btn:hover { background: #f0f6ff; }
+
 </style>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBld5CVgzckJJJ-NBULuoPQ3Pxf8yfxphk",
+    authDomain: "hohihang-cal.firebaseapp.com",
+    projectId: "hohihang-cal",
+    storageBucket: "hohihang-cal.firebasestorage.app",
+    messagingSenderId: "741871015511",
+    appId: "1:741871015511:web:b9f6720a8913ea219a3512"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const provider = new GoogleAuthProvider();
+
+  // 로그인 상태 감지
+  onAuthStateChanged(auth, (user) => {
+    const loginBtn = document.getElementById('google-login-btn');
+    const userInfo = document.getElementById('user-info');
+    const userAvatar = document.getElementById('user-avatar');
+    const userName = document.getElementById('user-name');
+    const cloudSaveBtn = document.getElementById('cloud-save-btn');
+    const cloudLoadBtn = document.getElementById('cloud-load-btn');
+
+    if (user) {
+      if (loginBtn) loginBtn.style.display = 'none';
+      if (userInfo) userInfo.style.display = 'flex';
+      if (userAvatar) userAvatar.src = user.photoURL || '';
+      if (userName) userName.textContent = user.displayName || user.email;
+      if (cloudSaveBtn) cloudSaveBtn.style.display = 'inline-flex';
+      if (cloudLoadBtn) cloudLoadBtn.style.display = 'inline-flex';
+      window._fbUser = user;
+      window._fbDb = db;
+    } else {
+      if (loginBtn) loginBtn.style.display = 'inline-flex';
+      if (userInfo) userInfo.style.display = 'none';
+      if (cloudSaveBtn) cloudSaveBtn.style.display = 'none';
+      if (cloudLoadBtn) cloudLoadBtn.style.display = 'none';
+      window._fbUser = null;
+      window._fbDb = db;
+    }
+  });
+
+  // 구글 로그인
+  window.googleLogin = async function() {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch(e) {
+      alert('로그인 실패: ' + e.message);
+    }
+  };
+
+  // 로그아웃
+  window.googleLogout = async function() {
+    if (confirm('로그아웃 하시겠습니까?')) {
+      await signOut(auth);
+    }
+  };
+
+  // 클라우드에 시나리오 저장
+  window.cloudSaveScenario = async function() {
+    if (!window._fbUser) { alert('먼저 로그인해 주세요.'); return; }
+    var name = prompt('저장할 시나리오 이름을 입력하세요:', '내 시나리오 ' + new Date().toLocaleDateString('ko-KR'));
+    if (!name) return;
+    try {
+      var uid = window._fbUser.uid;
+      var scId = 'sc_' + Date.now();
+      var data = {
+        name: name,
+        savedAt: new Date().toISOString(),
+        data: JSON.parse(JSON.stringify(window.D || {}))
+      };
+      await setDoc(doc(db, 'users', uid, 'scenarios', scId), data);
+      alert('✅ "' + name + '" 저장 완료!');
+    } catch(e) {
+      alert('저장 실패: ' + e.message);
+    }
+  };
+
+  // 클라우드 시나리오 불러오기
+  window.cloudLoadScenarios = async function() {
+    if (!window._fbUser) { alert('먼저 로그인해 주세요.'); return; }
+    try {
+      var uid = window._fbUser.uid;
+      var snap = await getDocs(collection(db, 'users', uid, 'scenarios'));
+      if (snap.empty) { alert('저장된 시나리오가 없습니다.'); return; }
+
+      var modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;';
+      var box = document.createElement('div');
+      box.style.cssText = 'background:#fff;border-radius:16px;padding:32px;min-width:360px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
+      box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;"><h3 style="font-size:18px;font-weight:700;color:#191F28;">☁️ 저장된 시나리오</h3><button onclick="this.closest('div[style*=fixed]').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#6B7684;">✕</button></div>';
+
+      snap.forEach((docSnap) => {
+        var sc = docSnap.data();
+        var id = docSnap.id;
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border:1px solid #E8EBED;border-radius:10px;margin-bottom:10px;';
+        var savedDate = sc.savedAt ? new Date(sc.savedAt).toLocaleDateString('ko-KR') : '';
+        row.innerHTML = '<div><div style="font-weight:600;color:#191F28;font-size:14px;">' + sc.name + '</div><div style="font-size:12px;color:#6B7684;margin-top:2px;">' + savedDate + '</div></div>' +
+          '<div style="display:flex;gap:8px;">' +
+          '<button onclick="window._loadCloud('' + id + '')" style="background:#3182F6;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-weight:600;">불러오기</button>' +
+          '<button onclick="window._deleteCloud('' + id + '',this)" style="background:#FF4D4F;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-size:13px;cursor:pointer;">삭제</button>' +
+          '</div>';
+        box.appendChild(row);
+      });
+
+      modal.appendChild(box);
+      document.body.appendChild(modal);
+
+    } catch(e) {
+      alert('불러오기 실패: ' + e.message);
+    }
+  };
+
+  // 시나리오 적용
+  window._loadCloud = async function(scId) {
+    if (!window._fbUser) return;
+    try {
+      var uid = window._fbUser.uid;
+      var snap = await getDoc(doc(db, 'users', uid, 'scenarios', scId));
+      if (!snap.exists()) { alert('시나리오를 찾을 수 없습니다.'); return; }
+      var sc = snap.data();
+      if (confirm('"' + sc.name + '" 를 불러올까요? 현재 데이터가 덮어씌워집니다.')) {
+        if (sc.data && window.D) {
+          Object.assign(window.D, sc.data);
+          if (window.renderAll) window.renderAll();
+          document.querySelectorAll('div[style*="fixed"]').forEach(el => el.remove());
+          alert('✅ "' + sc.name + '" 불러오기 완료!');
+        }
+      }
+    } catch(e) {
+      alert('오류: ' + e.message);
+    }
+  };
+
+  // 시나리오 삭제
+  window._deleteCloud = async function(scId, btn) {
+    if (!window._fbUser) return;
+    if (!confirm('이 시나리오를 삭제하시겠습니까?')) return;
+    try {
+      var uid = window._fbUser.uid;
+      await deleteDoc(doc(db, 'users', uid, 'scenarios', scId));
+      btn.closest('div[style*="display:flex"]').remove();
+    } catch(e) {
+      alert('삭제 실패: ' + e.message);
+    }
+  };
+</script>
+
 </head>
-<body>
+<body><div id="auth-bar" style="position:fixed;top:16px;right:20px;z-index:1000;display:flex;align-items:center;gap:10px;">
+      <button id="google-login-btn" onclick="googleLogin()">
+        <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Google 로그인
+      </button>
+      <div id="user-info">
+        <img id="user-avatar" src="" alt="프로필">
+        <span id="user-name"></span>
+        <button id="logout-btn" onclick="googleLogout()">로그아웃</button>
+      </div>
+      <button id="cloud-save-btn" onclick="cloudSaveScenario()">☁️ 저장</button>
+      <button id="cloud-load-btn" onclick="cloudLoadScenarios()">📂 불러오기</button>
+    </div>
 
 <!-- 모바일 상단 바 (768px 이하에서만 표시) -->
 <div class="mob-bar">
