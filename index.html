@@ -818,7 +818,9 @@ tr[data-trow]:hover .nc-td { background: #252525; }
   <div id="hh-login-btn-area" style="display: none;">
     <button onclick="document.getElementById('login-overlay').style.display='flex'" style="padding:6px 16px;background:#f59e0b;border:none;border-radius:8px;color:#1e293b;font-size:13px;font-weight:700;cursor:pointer;">로그인</button>
   </div>
-</div><script>
+  <button id="ni-save-toggle" title="시나리오 저장" onclick="niSaveCurrentScenario()" style="padding:6px 12px;background:#06b6d4;border:none;border-radius:8px;color:#072f3f;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px">💾 저장</button>
+</div>
+<script>
 function hhShowTab(t){
 var lf=document.getElementById('hh-login-form');
 var rf=document.getElementById('hh-register-form');
@@ -847,6 +849,63 @@ if(r==='ok'){ok.style.display='';document.getElementById('hh-login-id').value=id
 else if(r==='duplicate'){e.textContent='이미 존재하는 아이디입니다.';e.style.display='';}
 else if(r==='id_short'){e.textContent='아이디는 3자 이상이어야 합니다.';e.style.display='';}
 else if(r==='pw_short'){e.textContent='비밀번호는 6자 이상이어야 합니다.';e.style.display='';}}
+
+/* Scenario save button handler: snapshot NI into D.scenarios */
+function niSaveCurrentScenario(){
+  try{
+    if(!window.D) window.D={}; if(!Array.isArray(window.D.scenarios)) window.D.scenarios=[];
+    var name = new Date().toLocaleString('ko-KR');
+    var snap = { name: name, savedAt: Date.now(), ni: window.NI ? JSON.parse(JSON.stringify(window.NI)) : null };
+    window.D.scenarios.unshift(snap);
+    // persist D
+    try{ localStorage.setItem('sambo-data', JSON.stringify(window.D)); }catch(e){}
+    // update UI
+    if(typeof niRenderScGrid==='function') niRenderScGrid();
+    else {
+      var grid=document.getElementById('sc-grid'); if(grid){
+        var html = '';
+        window.D.scenarios.forEach(function(s,i){
+          html += '<div class="sc-card"><div style="font-weight:700">'+(s.name||'시나리오')+'</div><div style="font-size:12px;color:#98a0ad;margin-top:6px">'+new Date(s.savedAt).toLocaleString()+'</div><div class="sc-acts" style="margin-top:12px"><button class="sc-load" onclick="(function(i){loadScenario('+i+')})('+i+')">불러오기</button><button class="sc-del" onclick="(function(i){niDeleteScenario('+i+')})('+i+')">삭제</button></div></div>';
+        });
+        grid.innerHTML = html;
+      }
+    }
+    var b=document.getElementById('ni-save-toggle'); if(b){b.textContent='✅ 저장됨'; setTimeout(function(){b.textContent='💾 저장';},1400);}    
+  }catch(e){ alert('저장 실패'); }
+}
+
+function niRenderScGrid(){
+  var grid=document.getElementById('sc-grid'); if(!grid) return;
+  if(!window.D||!Array.isArray(window.D.scenarios)||!window.D.scenarios.length){ grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--tx3);font-size:13px">저장된 시나리오가 없습니다.<br>수치를 입력한 뒤 "+ 새 시나리오로 저장" 버튼을 눌러보세요.</div>'; return; }
+  var html=''; window.D.scenarios.forEach(function(s,i){
+    html += '<div class="sc-card">'+
+              '<div style="font-weight:700">'+(s.name||'시나리오')+'</div>'+
+              '<div style="font-size:12px;color:#98a0ad;margin-top:6px">'+new Date(s.savedAt).toLocaleString()+'</div>'+
+              '<div class="sc-acts" style="margin-top:12px">'+
+                '<button class="sc-load" onclick="loadScenario('+i+')">불러오기</button>'+
+                '<button class="btn out sm" onclick="niRenameScenario('+i+')">이름변경</button>'+
+                '<button class="sc-del" onclick="niDeleteScenario('+i+')">삭제</button>'+
+              '</div>'+
+            '</div>';
+  });
+  grid.innerHTML = html;
+}
+
+function niRenameScenario(i){
+  if(!window.D||!Array.isArray(window.D.scenarios)||!window.D.scenarios[i]) return;
+  var cur = window.D.scenarios[i].name || new Date(window.D.scenarios[i].savedAt).toLocaleString();
+  var nv = prompt('시나리오 이름을 입력하세요', cur);
+  if(nv===null) return; nv = nv.trim(); if(nv==='') nv = cur;
+  window.D.scenarios[i].name = nv;
+  try{ localStorage.setItem('sambo-data', JSON.stringify(window.D)); }catch(e){}
+  niRenderScGrid();
+}
+
+function niDeleteScenario(i){ if(!window.D||!Array.isArray(window.D.scenarios)) return; if(!confirm('삭제하시겠습니까?')) return; window.D.scenarios.splice(i,1); try{ localStorage.setItem('sambo-data', JSON.stringify(window.D)); }catch(e){}; niRenderScGrid(); }
+
+function loadScenario(i){ if(!window.D||!window.D.scenarios||!window.D.scenarios[i]) return; var s=window.D.scenarios[i]; if(!s.ni) return; window.NI = JSON.parse(JSON.stringify(s.ni)); if(typeof niRenderMenu==='function') niRenderMenu(); if(typeof niRenderSales2==='function') niRenderSales2(); if(typeof niRenderDash==='function') niRenderDash(); try{ localStorage.setItem('sambo_ni_data', JSON.stringify(window.NI)); }catch(e){} }
+
+document.addEventListener('DOMContentLoaded', function(){ try{ var stored = localStorage.getItem('sambo-data'); if(stored) window.D = Object.assign(window.D||{}, JSON.parse(stored)); niRenderScGrid(); }catch(e){} });
 </script>
 
 <!-- 모바일 상단 바 (768px 이하에서만 표시) -->
@@ -3849,9 +3908,14 @@ window.addEventListener('beforeunload',function(e){
 });
 
 /* ── auto-comma ── */
+/* Preserve raw typing during input; format on blur instead */
 window.niAutoCommaEl=function(el){
-  var c=el.selectionStart, v=el.value.replace(/[^0-9]/g,'');
-  el.value=v?Number(v).toLocaleString('ko-KR'):'';
+  /* no-op: keep raw characters while typing */
+};
+window.niFormatCommaEl=function(el){
+  if(!el) return;
+  var v = (el.value+'').replace(/[^0-9]/g,'');
+  el.value = v ? Number(v).toLocaleString('ko-KR') : '';
 };
 
 /* ── costbox builder ── */
@@ -3860,14 +3924,12 @@ function costBox(cid,iid,rf,amt,rate){
   return '<div class="nc-costbox">'+
     '<div class="nc-row">'+
       '<input class="nc-amt-inp" type="text" '+ds+' value="'+fmt(amt)+'"'+
-        ' onchange="niHandleAmt(this.dataset.cid,this.dataset.iid,this.dataset.rf,this.value)"'+
-        ' onfocus="this.select()" oninput="niAutoCommaEl(this)">'+
+        ' onfocus="this.select()" oninput="niHandleAmt(this.dataset.cid,this.dataset.iid,this.dataset.rf,this.value)" onblur="niFormatCommaEl(this)">'+
       '<span class="nc-unit">원</span>'+
     '</div>'+
     '<div class="nc-row">'+
       '<input class="nc-pct-inp" type="text" '+ds+' value="'+fmtP(rate)+'"'+
-        ' onchange="niHandlePct(this.dataset.cid,this.dataset.iid,this.dataset.rf,this.value)"'+
-        ' onfocus="this.select()">'+
+        ' onfocus="this.select()" oninput="niHandlePct(this.dataset.cid,this.dataset.iid,this.dataset.rf,this.value)">'+
       '<span class="nc-unit">%</span>'+
     '</div>'+
   '</div>';
@@ -3925,11 +3987,11 @@ function buildRow(cat,item){
       ' value="'+esc(item.name)+'"'+
       ' onchange="niHandleName2(this.dataset.cid,this.dataset.iid,this.value)"></td>'+
     '<td class="ni-price-cell"><div class="ni-price-wrap">'+
-      '<input class="ni-price-inp" type="text"'+
-        ' data-cid="'+cid+'" data-iid="'+iid+'"'+
-        ' value="'+fmt(item.price)+'"'+
-        ' onchange="niHandlePrice2(this.dataset.cid,this.dataset.iid,this.value)"'+
-        ' onfocus="this.select()" oninput="niAutoCommaEl(this)">'+
+      '<input class="ni-price-inp" type="text"'
+        ' data-cid="'+cid+'" data-iid="'+iid+'"'
+        ' value="'+fmt(item.price)+'"'
+        ' onchange="niHandlePrice2(this.dataset.cid,this.dataset.iid,this.value)"'
+        ' onfocus="this.select()" oninput="niHandlePrice2(this.dataset.cid,this.dataset.iid,this.value)" onblur="niFormatCommaEl(this)">'+
       '<span class="nc-unit">원</span>'+
     '</div></td>'+
     '<td style="text-align:right">'+costBox(cid,iid,'costRate',c.cA,c.cR)+'</td>'+
@@ -3962,7 +4024,7 @@ function buildCard(cat,item){
         ' data-cid="'+cid+'" data-iid="'+iid+'"'+
         ' value="'+fmt(item.price)+'"'+
         ' onchange="niHandlePrice2(this.dataset.cid,this.dataset.iid,this.value)"'+
-        ' onfocus="this.select()" oninput="niAutoCommaEl(this)">'+
+        ' onfocus="this.select()" oninput="niHandlePrice2(this.dataset.cid,this.dataset.iid,this.value)" onblur="niFormatCommaEl(this)">'+
       '<span class="nc-unit">원</span>'+
     '</div>'+
     '<div class="nc-field-row"><span class="nc-field-lbl">원가</span>'+costBox(cid,iid,'costRate',c.cA,c.cR)+'</div>'+
@@ -4134,8 +4196,7 @@ function priceInput(cid,iid,price,cls){
   return '<input class="'+(cls||'ns-price-inp')+'" type="text"'+
     ' data-cid="'+cid+'" data-iid="'+iid+'"'+
     ' value="'+fmt(price)+'"'+
-    ' onchange="nsUpdatePrice(this.dataset.cid,this.dataset.iid,this.value)"'+
-    ' onfocus="this.select()" oninput="niAutoCommaEl(this)">';
+    ' onfocus="this.select()" oninput="nsUpdatePrice(this.dataset.cid,this.dataset.iid,this.value)" onblur="niFormatCommaEl(this)">';
 }
 
 /* ── 매출 테이블행 ── */
